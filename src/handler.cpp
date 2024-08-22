@@ -2,9 +2,11 @@
 
 #include "types.hpp"
 
+#include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 
 #include <algorithm>
+#include <format>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -359,6 +361,18 @@ std::vector<std::string> getSubTreePathsById(
             ResourceNotFound();
     }
 
+    std::string intfstr = "";
+    for (const auto& intf : interfaces)
+    {
+        intfstr += intf + " ";
+    }
+
+    phosphor::logging::log<phosphor::logging::level::ERR>(
+        std::format(
+            "TEST: getSubTreePathsById: ID={}, OBJPATH={}, interfaces=({})", id,
+            objectPath, intfstr)
+            .c_str());
+
     std::vector<std::string> output;
     for (const auto& path : interfaceMap)
     {
@@ -371,10 +385,28 @@ std::vector<std::string> getSubTreePathsById(
             continue;
         }
 
+        phosphor::logging::log<phosphor::logging::level::ERR>(
+            std::format(
+                "   TEST:0: getSubTreePathsById -- each interfaceMap, THISPATH={} ",
+                thisPath)
+                .c_str());
+
         if (thisPath.starts_with(objectPath))
         {
             for (const auto& interfaceMap : path.second)
             {
+                std::string mapstr = "";
+                for (const auto& intf : interfaceMap.second)
+                {
+                    mapstr += intf + " ";
+                }
+
+                phosphor::logging::log<phosphor::logging::level::ERR>(
+                    std::format(
+                        "   TEST:2: getSubTreePathsById:  interfaceMap=({})",
+                        mapstr)
+                        .c_str());
+
                 std::vector<std::string> tempoutput(
                     std::min(interfaces.size(), interfaceMap.second.size()));
                 if (std::set_intersection(
@@ -383,7 +415,12 @@ std::vector<std::string> getSubTreePathsById(
                         tempoutput.begin()) != tempoutput.begin())
                 {
                     output.emplace_back(thisPath);
-                    break;
+                    phosphor::logging::log<phosphor::logging::level::ERR>(
+                        std::format(
+                            "   TEST:Z: getSubTreePathsById -- output path THISPATH={}",
+                            thisPath)
+                            .c_str());
+                    // break;
                 }
             }
         }
